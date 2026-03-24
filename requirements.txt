@@ -1,0 +1,8 @@
+numpy
+opencv-python
+moviepy
+scipy
+folium
+pyproj
+matplotlib
+pytest

@@ -1,0 +1,19 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+
+# macOS
+.DS_Store
+
+# Generated analysis artifacts
+debug_plots/
+annotated_frames/
