@@ -92,6 +92,53 @@ def _prune_weak_interior_candidates(
     return kept
 
 
+def _prune_globally_weak_candidates(
+    candidates: list[VisualEventCandidate],
+    global_ratio_threshold: float = 0.01,
+) -> list[VisualEventCandidate]:
+    """Drop candidates whose score is far below the strongest peak.
+
+    When real explosions produce z-scores in the thousands and false positives
+    produce scores in the tens, neighbor-based pruning misses the false positives
+    because they are only compared to each other.  This pass removes any candidate
+    whose score is less than *global_ratio_threshold* times the maximum score.
+    """
+
+    if not candidates:
+        return candidates
+
+    max_score = max(c.score for c in candidates)
+    score_floor = max_score * global_ratio_threshold
+    progress_kv(
+        "[video] Global weak-candidate pruning",
+        candidate_count=len(candidates),
+        max_score=max_score,
+        global_ratio_threshold=global_ratio_threshold,
+        score_floor=score_floor,
+    )
+
+    kept: list[VisualEventCandidate] = []
+    pruned_count = 0
+    for candidate in candidates:
+        if candidate.score < score_floor:
+            pruned_count += 1
+            progress(
+                f"[video] Globally weak candidate at t={candidate.time_sec:.3f}s PRUNED "
+                f"(score={candidate.score:.2f}, floor={score_floor:.2f}, "
+                f"ratio={candidate.score / max_score:.5f}, "
+                f"brightness_score={candidate.brightness_score:.2f}, "
+                f"diff_score={candidate.diff_score:.2f}, "
+                f"motion_score={candidate.motion_score:.2f})."
+            )
+        else:
+            kept.append(candidate)
+
+    for candidate_id, candidate in enumerate(kept, start=1):
+        candidate.candidate_id = candidate_id
+    progress(f"[video] Global pruning kept {len(kept)} candidate(s), removed {pruned_count}.")
+    return kept
+
+
 def _robust_normalize(values: np.ndarray) -> np.ndarray:
     progress_kv("[video] Normalizing array", size=values.size)
     if values.size == 0:
@@ -215,6 +262,9 @@ def analyze_video(
         height_scale = float(np.max(properties.get("peak_heights", np.array([1.0]))))
         for candidate_id, frame_index in enumerate(merged_peak_indices.tolist(), start=1):
             score = float(combined_score[frame_index])
+            b_score = float(brightness_score[frame_index])
+            d_score = float(diff_score[frame_index])
+            m_score = float(motion_score[frame_index])
             confidence = float(np.clip(score / max(height_scale, 1.0), 0.0, 1.0))
             candidates.append(
                 VisualEventCandidate(
@@ -222,19 +272,21 @@ def analyze_video(
                     time_sec=frame_index / fps,
                     frame_index=frame_index,
                     score=score,
-                    brightness_score=float(brightness_score[frame_index]),
-                    diff_score=float(diff_score[frame_index]),
-                    motion_score=float(motion_score[frame_index]),
+                    brightness_score=b_score,
+                    diff_score=d_score,
+                    motion_score=m_score,
                     confidence=confidence,
                     x_position=float(x_array[frame_index]) if frame_width > 0 else None,
                 )
             )
             progress(
                 f"[video] Candidate {candidate_id}: frame={frame_index}, "
-                f"t={frame_index / fps:.3f}s, score={score:.2f}."
+                f"t={frame_index / fps:.3f}s, score={score:.2f} "
+                f"(brightness={b_score:.2f}, diff={d_score:.2f}, motion={m_score:.2f})."
             )
 
         candidates = _prune_weak_interior_candidates(candidates)
+        candidates = _prune_globally_weak_candidates(candidates)
 
         if not candidates:
             warnings.append("No strong visual explosion candidates were detected.")

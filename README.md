@@ -44,6 +44,7 @@ python main.py \
   --camera-lon 35.2 \
   --camera-azimuth 110 \
   --hfov 65 \
+  --output-dir results/ \
   --output-json result.json \
   --output-csv result.csv \
   --output-map map.html \
@@ -95,6 +96,7 @@ Optional manual overrides:
 
 Optional outputs:
 
+- `--output-dir`: optional, default current directory. Base directory for all output files. Relative paths given to other output flags are resolved under this directory; absolute paths are used as-is.
 - `--output-json`: optional, default none
 - `--output-csv`: optional, default none
 - `--output-map`: optional, default none, but requires `--camera-lat` and `--camera-lon`
@@ -138,6 +140,7 @@ Interactive review:
 
 Outputs:
 
+- `--output-dir`: optional, default current directory. Base directory for all output files. Any relative path given to the flags below is resolved under this directory; absolute paths pass through unchanged.
 - `--output-json`: optional, default none. Writes the full result payload, including candidates, pairings, and warnings, to JSON.
 - `--output-csv`: optional, default none. Writes the final paired events to CSV. Useful for spreadsheet review or downstream analysis.
 - `--output-map`: optional, default none. Writes an HTML map. Requires `--camera-lat` and `--camera-lon`.

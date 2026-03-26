@@ -373,26 +373,31 @@ def build_parser() -> argparse.ArgumentParser:
 
     output_group = parser.add_argument_group("Outputs and review")
     output_group.add_argument(
+        "--output-dir",
+        default=".",
+        help="Optional. Base directory for all output files. Relative output paths are resolved against this directory. Default: current directory.",
+    )
+    output_group.add_argument(
         "--output-json",
         default=None,
-        help="Optional. JSON results path. Default: none.",
+        help="Optional. JSON results path (relative to --output-dir if not absolute). Default: none.",
     )
     output_group.add_argument(
         "--output-map",
         default=None,
-        help="Optional. HTML map path. Requires --camera-lat and --camera-lon. Default: none.",
+        help="Optional. HTML map path (relative to --output-dir if not absolute). Requires --camera-lat and --camera-lon. Default: none.",
     )
-    output_group.add_argument("--output-csv", default=None, help="Optional. CSV results path. Default: none.")
+    output_group.add_argument("--output-csv", default=None, help="Optional. CSV results path (relative to --output-dir if not absolute). Default: none.")
     output_group.add_argument("--debug-plots", action="store_true", help="Optional flag. Save visual/audio debug plots. Default: disabled.")
     output_group.add_argument(
         "--debug-dir",
         default="debug_plots",
-        help="Optional. Directory for debug plot output. Default: %(default)s.",
+        help="Optional. Directory for debug plot output (relative to --output-dir if not absolute). Default: %(default)s.",
     )
     output_group.add_argument(
         "--annotated-frames-dir",
         default=None,
-        help="Optional. Directory for annotated still frames showing detected event positions. Default: none.",
+        help="Optional. Directory for annotated still frames (relative to --output-dir if not absolute). Default: none.",
     )
     output_group.add_argument(
         "--review-x-positions",
@@ -400,6 +405,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional flag. Interactively click corrected x positions for matched events. Default: disabled.",
     )
     return parser
+
+
+def _resolve_output(path: str | None, output_dir: Path) -> str | None:
+    """Resolve *path* relative to *output_dir* unless it is already absolute."""
+    if path is None:
+        return None
+    p = Path(path)
+    return str(p if p.is_absolute() else output_dir / p)
 
 
 def run_analysis(args: argparse.Namespace) -> AnalysisResult:
@@ -412,6 +425,14 @@ def run_analysis(args: argparse.Namespace) -> AnalysisResult:
     video_path = Path(args.video)
     if not video_path.exists():
         raise FileNotFoundError(f"Video file does not exist: {video_path}")
+
+    output_dir = Path(args.output_dir).resolve()
+    args.output_json = _resolve_output(args.output_json, output_dir)
+    args.output_map = _resolve_output(args.output_map, output_dir)
+    args.output_csv = _resolve_output(args.output_csv, output_dir)
+    args.debug_dir = str(Path(args.debug_dir) if Path(args.debug_dir).is_absolute() else output_dir / args.debug_dir)
+    if args.annotated_frames_dir is not None:
+        args.annotated_frames_dir = _resolve_output(args.annotated_frames_dir, output_dir)
 
     progress_kv("[analysis] Parsed arguments", **vars(args))
     progress(f"[analysis] Starting analysis for {video_path}.")

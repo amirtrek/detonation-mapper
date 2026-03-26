@@ -152,6 +152,50 @@ def _merge_event_times(
     return merged
 
 
+def _prune_globally_weak_candidates(
+    candidates: list[AudioEventCandidate],
+    global_ratio_threshold: float = 0.10,
+) -> list[AudioEventCandidate]:
+    """Drop candidates whose score is far below the strongest boom.
+
+    Explosion booms produce z-scores in the hundreds; background transients
+    produce single-digit or low double-digit scores.  Neighbor-based pruning
+    misses these because they are only compared to each other.
+    """
+
+    if not candidates:
+        return candidates
+
+    max_score = max(c.score for c in candidates)
+    score_floor = max_score * global_ratio_threshold
+    progress_kv(
+        "[audio] Global weak-candidate pruning",
+        candidate_count=len(candidates),
+        max_score=max_score,
+        global_ratio_threshold=global_ratio_threshold,
+        score_floor=score_floor,
+    )
+
+    kept: list[AudioEventCandidate] = []
+    pruned_count = 0
+    for candidate in candidates:
+        if candidate.score < score_floor:
+            pruned_count += 1
+            progress(
+                f"[audio] Globally weak candidate at t={candidate.time_sec:.3f}s PRUNED "
+                f"(score={candidate.score:.2f}, floor={score_floor:.2f}, "
+                f"ratio={candidate.score / max_score:.5f}, "
+                f"energy={candidate.energy_score:.2f}, onset={candidate.onset_score:.2f})."
+            )
+        else:
+            kept.append(candidate)
+
+    for candidate_id, candidate in enumerate(kept, start=1):
+        candidate.candidate_id = candidate_id
+    progress(f"[audio] Global pruning kept {len(kept)} candidate(s), removed {pruned_count}.")
+    return kept
+
+
 def _prune_weak_interior_candidates(
     candidates: list[AudioEventCandidate],
     relative_score_threshold: float = 0.10,
@@ -283,18 +327,25 @@ def analyze_audio(
         peak_heights = properties.get("peak_heights", np.array([], dtype=float))
         height_scale = float(np.max(peak_heights)) if peak_heights.size else max(float(np.max(combined_score)), 1.0)
         for candidate_id, (time_sec, score, array_index) in enumerate(merged, start=1):
+            e_score = float(energy_score[array_index])
+            o_score = float(onset_score[array_index])
             confidence = float(np.clip(score / max(height_scale, 1.0), 0.0, 1.0))
             candidates.append(
                 AudioEventCandidate(
                     candidate_id=candidate_id,
                     time_sec=float(time_sec),
                     score=float(score),
-                    energy_score=float(energy_score[array_index]),
-                    onset_score=float(onset_score[array_index]),
+                    energy_score=e_score,
+                    onset_score=o_score,
                     confidence=confidence,
                 )
             )
+            progress(
+                f"[audio] Candidate {candidate_id}: t={time_sec:.3f}s, score={score:.2f} "
+                f"(energy={e_score:.2f}, onset={o_score:.2f})."
+            )
         candidates = _prune_weak_interior_candidates(candidates)
+        candidates = _prune_globally_weak_candidates(candidates)
         if not candidates:
             warnings.append("No strong audio transient candidates were detected.")
             progress("[audio] No strong audio transient candidates were detected.")
