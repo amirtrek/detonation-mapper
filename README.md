@@ -55,7 +55,7 @@ python main.py \
 
 Example source screenshot:
 
-![Example detonation source frame](examples/example-screenshot.png)
+<img src="examples/example-screenshot.png" alt="Example detonation source frame" width="360" />
 
 Example map output:
 
