@@ -55,11 +55,11 @@ python main.py \
 
 Example source screenshot:
 
-![Example detonation source frame](examples/example-screenshot.svg)
+![Example detonation source frame](examples/example-screenshot.png)
 
 Example map output:
 
-![Example detonation map](examples/example-map.svg)
+![Example detonation map](examples/example-map.png)
 
 Manual per-event x-positions:
 
