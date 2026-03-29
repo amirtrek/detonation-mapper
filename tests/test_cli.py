@@ -1,4 +1,4 @@
-from cli import _apply_geolocation
+from cli import _apply_geolocation, build_parser
 from models import MatchedExplosionEvent
 
 
@@ -29,3 +29,11 @@ def test_apply_geolocation_estimates_bearing_from_x_position() -> None:
     assert event.bearing_deg == 110.0
     assert event.estimated_lat is not None
     assert event.estimated_lon is not None
+
+
+def test_build_parser_sets_default_hfov() -> None:
+    parser = build_parser()
+
+    args = parser.parse_args(["--video", "clip.mp4"])
+
+    assert args.hfov == 80.0

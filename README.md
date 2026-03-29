@@ -43,7 +43,6 @@ python main.py \
   --camera-lat 31.7 \
   --camera-lon 35.2 \
   --camera-azimuth 110 \
-  --hfov 65 \
   --output-dir results/ \
   --output-json result.json \
   --output-csv result.csv \
@@ -51,6 +50,16 @@ python main.py \
   --debug-plots \
   --annotated-frames-dir annotated_frames
 ```
+
+## Example Output
+
+Example source screenshot:
+
+![Example detonation source frame](examples/example-screenshot.svg)
+
+Example map output:
+
+![Example detonation map](examples/example-map.svg)
 
 Manual per-event x-positions:
 
@@ -87,7 +96,7 @@ Needed for mapping:
 Needed for directional point estimates instead of just distance:
 
 - `--camera-azimuth`: optional, no default
-- `--hfov`: optional, no default
+- `--hfov`: optional, default `80.0`
 
 Optional manual overrides:
 
@@ -127,7 +136,7 @@ Map and geolocation inputs:
 - `--camera-lat`: optional, default none. Camera latitude in decimal degrees. Required if you want the tool to place events on a map.
 - `--camera-lon`: optional, default none. Camera longitude in decimal degrees. Required if you want the tool to place events on a map.
 - `--camera-azimuth`: optional, default none. Compass direction of the camera centerline in degrees. `0` is north, `90` is east, `180` is south, `270` is west. Used to turn an event's horizontal frame position into a map bearing.
-- `--hfov`: optional, default none. Horizontal field of view in degrees. This should be the full left-to-right field of view of the camera, not half. Used together with `--camera-azimuth` and the event `x` position.
+- `--hfov`: optional, default `80.0`. Horizontal field of view in degrees. This should be the full left-to-right field of view of the camera, not half. Used together with `--camera-azimuth` and the event `x` position.
 
 Manual overrides:
 

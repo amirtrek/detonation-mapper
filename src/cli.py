@@ -357,8 +357,8 @@ def build_parser() -> argparse.ArgumentParser:
     geo_group.add_argument(
         "--hfov",
         type=float,
-        default=None,
-        help="Optional. Camera horizontal field of view in degrees. Used with --camera-azimuth and x-position to estimate bearing. Default: none.",
+        default=80.0,
+        help="Optional. Camera horizontal field of view in degrees. Used with --camera-azimuth and x-position to estimate bearing. Default: %(default)s.",
     )
     geo_group.add_argument(
         "--event-x-positions",
