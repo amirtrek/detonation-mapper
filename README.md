@@ -51,16 +51,6 @@ python main.py \
   --annotated-frames-dir annotated_frames
 ```
 
-## Example Output
-
-Example source screenshot:
-
-<img src="examples/example-screenshot.png" alt="Example detonation source frame" width="360" />
-
-Example map output:
-
-![Example detonation map](examples/example-map.png)
-
 Manual per-event x-positions:
 
 ```bash
